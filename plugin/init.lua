@@ -9,6 +9,13 @@ end
 g.autoloaded_run = true
 
 command("CompileFocus", require "run".open_compiler, {})
+command("CompileAuto", function()
+    require "run".compile_auto(
+        v.nvim_buf_get_option(0, "filetype"), 
+        v.nvim_buf_get_name(0)
+    )
+end, {
+})
 
 command("Compile", function(args)
     require "run".compile(args.args)

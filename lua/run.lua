@@ -1,6 +1,43 @@
 local M = {}
 local v = vim.api
 
+M._default_compilers = { -- {{{
+    rust       = 'cargo test',
+    go         = 'go run',
+    java       = 'mvn clean test',
+    typescript = 'tsc -p package.json',
+    coffee     = 'coffee $#',
+    ruby       = 'bin/rails test',
+    php        = './vendor/bin/phpunit tests',
+    scdoc      = 'scdoc < $# > $#.1',
+    markdown   = 'mdcat $#',
+    tex        = 'pdflatex $# && pdflatex $#',
+    javascript = 'node $#',
+    julia      = 'julia $#',
+    python     = 'python $#',
+    lua        = 'lua $#',
+    sh         = 'sh $#',
+    perl       = 'perl $#',
+    pascal     = 'fpc $#',
+    c          = 'make',
+    cpp        = 'make',
+    fortran    = 'make',
+    asm        = 'make',
+    make       = 'make',
+} -- }}}
+
+M.set_default_compilers = function(new_def)
+    for filetype, compiler in pairs(new_def) do
+        M._default_compilers.filetype = compiler
+    end
+end
+
+M.compile_auto = function(filetype, filename)
+    local cmd = M._default_compilers[filetype]
+    M._compile_cmd = string.gsub(cmd, "$#", filename)
+    M.compile()
+end
+
 -- base function to open the window
 M._open_run_window = function(buffer) -- {{{
     return v.nvim_open_win(buffer, true, {
@@ -69,6 +106,9 @@ M.compile = function(cmd) -- {{{
             local keys = v.nvim_replace_termcodes("<C-\\>", true, false, true)
             local keys = keys .. v.nvim_replace_termcodes("<C-n>", true, false, true)
             v.nvim_feedkeys(keys, "n", false)
+
+            -- set nobuflisted so it don't show up in :ls nor jumplist
+            v.nvim_buf_set_option(M._compile_buffer, "buflisted", false)
 
             -- use q and esc to quit window but keep compiler buffer opened
             -- "minimized"
