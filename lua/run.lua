@@ -49,7 +49,7 @@ M._open_run_window = function(buffer) -- {{{
     })
 end -- }}}
 
--- base function to open a terminal both for run and compile 
+-- base function to open a terminal any command
 M._open_term = function(cmd) -- {{{
     if not cmd then cmd = "" end
 
@@ -57,14 +57,62 @@ M._open_term = function(cmd) -- {{{
     M._open_run_window(buffer)
 
     vim.cmd("term " .. cmd)
-    vim.cmd("normal a")
 
     return buffer
 end -- }}}
 
+-- async job support {{{
+M._async_jobs = {
+    -- job = buffer
+}
+
+M.async_start = function(job)
+    local buffer = M._open_term(job)
+    v.nvim_buf_set_option(buffer, "buflisted", false)
+    v.nvim_buf_set_option(buffer, "filetype",  "run-async")
+    -- use q and esc to quit window but keep buffer opened
+    v.nvim_buf_set_keymap(buffer, "n", "q",     ":q<CR>", {})
+    v.nvim_buf_set_keymap(buffer, "n", "<Esc>", ":q<CR>", {})
+
+    -- add to jobs list
+    M._async_jobs[job] = buffer
+
+    v.nvim_create_autocmd({ "TermClose" }, {
+        buffer   = buffer,
+        callback = function()
+            v.nvim_echo({ { "Your job " .. job .. " just stopped.", "Error" } }, true, {})
+        end
+    })
+end
+
+M.async_buf_open = function(job)
+    M._open_run_window(M._async_jobs[job])
+end
+
+M.async_kill = function(job)
+    v.nvim_buf_delete(M._async_jobs[job], { force = true})
+    M._async_jobs[job] = nil
+end
+
+-- we need to use this because there's anyway we can hook on the deletion of
+-- terminal output buffers
+M.async_list = function()
+    local jobs_with_buf = {}
+    for job, buffer in pairs(M._async_jobs) do
+        if v.nvim_buf_is_valid(buffer) then
+            jobs_with_buf[job] = buffer
+        end
+    end
+    M._async_jobs = jobs_with_buf
+    return M._async_jobs
+end
+
+-- }}}
+
 -- violent and egoist function, gets rid of the buffer after using it
 M.run = function(cmd) -- {{{
     local buffer = M._open_term(cmd)
+    vim.cmd("normal a")
     vim.bo.bufhidden = "wipe"
     v.nvim_create_autocmd({ "TermClose" }, {
         buffer = buffer,
@@ -98,6 +146,10 @@ M.compile = function(cmd) -- {{{
     end
 
     M._compile_buffer = M._open_term(M._compile_cmd)
+    vim.cmd("normal a")
+    -- set nobuflisted so it don't show up in :ls nor jumplist
+    v.nvim_buf_set_option(M._compile_buffer, "buflisted", false)
+
 
     v.nvim_create_autocmd({ "TermClose" }, {
         buffer = M._compile_buffer,
@@ -106,9 +158,6 @@ M.compile = function(cmd) -- {{{
             local keys = v.nvim_replace_termcodes("<C-\\>", true, false, true)
             local keys = keys .. v.nvim_replace_termcodes("<C-n>", true, false, true)
             v.nvim_feedkeys(keys, "n", false)
-
-            -- set nobuflisted so it don't show up in :ls nor jumplist
-            v.nvim_buf_set_option(M._compile_buffer, "buflisted", false)
 
             -- use q and esc to quit window but keep compiler buffer opened
             -- "minimized"
