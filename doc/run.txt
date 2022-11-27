@@ -28,7 +28,7 @@ variable.
 (if one) opened when finished, so the output is persistent. You can close the
 window and then check it again with |CompileFocus|.
 
-The main difference it's that when calling |Compile| with args, it'll set the
+The main difference it's that when calling |Compile| with args, it'll set a
 variable inside the plugin Lua namespace to them, and if calling it without
 args, it'll run whatever is in that variable.
 
