@@ -75,7 +75,7 @@ Example with the defaults:
         javascript = 'node $#',
         julia      = 'julia $#',
         python     = 'python $#',
-        lua        = 'lua $#',
+        lua        = 'luajit $#',
         sh         = 'sh $#',
         perl       = 'perl $#',
         pascal     = 'fpc $#',
