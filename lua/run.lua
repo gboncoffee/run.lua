@@ -44,8 +44,9 @@ M._open_run_window = function(buffer) -- {{{
         relative = "editor",
         col      = math.ceil(vim.o.columns * 0.125),
         row      = math.ceil(vim.o.lines   * 0.125),
-        width    = math.ceil(vim.o.columns * 0.75),
-        height   = math.ceil(vim.o.lines   * 0.75),
+        width    = math.ceil(vim.o.columns * 0.75 - 2),
+        height   = math.ceil(vim.o.lines   * 0.75 - 2),
+        border   = "rounded"
     })
 end -- }}}
 
