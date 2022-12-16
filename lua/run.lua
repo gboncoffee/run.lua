@@ -127,19 +127,31 @@ end -- }}}
 M._compile_cmd_reset = function(cmd) -- {{{
     if (not cmd) or (cmd == "") then
         vim.fn.inputsave()
-        cmd = vim.fn.input("Compiler command: ", "", "file")
+        cmd = vim.fn.input("Compiler command: ", M._compile_cmd)
         vim.fn.inputrestore()
     end
 
-    M._compile_cmd = cmd
+    if cmd ~= "" then
+        M._compile_cmd = cmd
+    end
+
     return cmd
 end -- }}}
 
 -- human function, keeps the buffer after using it
 M.compile = function(cmd) -- {{{
 
-    if (cmd and cmd ~= "") or (not M._compile_cmd) then
+    if not M._compile_cmd then
+        M._compile_cmd = ""
+    end
+
+    if cmd and cmd ~= "" then
+        M._compile_cmd = cmd 
+    elseif M._compile_cmd == "" then
         M._compile_cmd_reset(cmd)
+        if M._compile_cmd == "" then
+            return
+        end
     end
 
     if (M._compile_buffer) and (v.nvim_buf_is_valid(M._compile_buffer)) then
