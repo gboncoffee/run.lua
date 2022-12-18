@@ -40,14 +40,16 @@ end
 
 -- base function to open the window
 M._open_run_window = function(buffer) -- {{{
-    return v.nvim_open_win(buffer, true, {
+    local window = v.nvim_open_win(buffer, true, {
         relative = "editor",
         col      = math.ceil(vim.o.columns * 0.125),
         row      = math.ceil(vim.o.lines   * 0.125),
         width    = math.ceil(vim.o.columns * 0.75 - 2),
         height   = math.ceil(vim.o.lines   * 0.75 - 2),
-        border   = "rounded"
+        border   = "rounded",
+        style    = "minimal"
     })
+    return window
 end -- }}}
 
 -- base function to open a terminal any command
@@ -57,7 +59,11 @@ M._open_term = function(cmd) -- {{{
     local buffer = v.nvim_create_buf(false, true)
     M._open_run_window(buffer)
 
-    vim.cmd("term " .. cmd)
+    if cmd == "" then
+        cmd = v.nvim_get_option_value("shell", {})
+    end
+
+    vim.fn.termopen(cmd)
 
     return buffer
 end -- }}}
